@@ -2,7 +2,9 @@ var React = require('react'),
     _ = require('underscore'),
     moment = require('moment'),
     sprintf = require('sprintf-js').sprintf,
-    Webcam = require('webcamjs');
+    Webcam = require('webcamjs'),
+
+    AppDispatcher = require('./app_dispatcher');
 
 var styles = {
   camera_container: {
@@ -44,11 +46,14 @@ var PhotoField = React.createClass({
   takeSnapshot: function (e) {
     e.preventDefault();
 
-    Webcam.snap(function (data_uri) {
+    Webcam.snap(function (value) {
       this.setState({
-        value: data_uri
+        value: value
       });
+
+      AppDispatcher.takeSnapshot(value);
     }.bind(this));
+
   },
 
   getLastSnapshot: function () {
