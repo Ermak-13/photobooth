@@ -24,28 +24,61 @@ var styles = {
     margin: '10px 15px'
   },
 
-  snapshots: {
-    width: '200px',
-    height: '150px',
-    border: 'dashed 2px',
-    marginTop: '10px'
+  label: {
+    color: 'white'
   },
 
-  controls: {
-    height: '40px'
+  submit: {
+    width: '100%'
   }
 };
 
 var PhotoField = React.createClass({
   getInitialState: function() {
     return {
-      value: null
+      value: null,
+
+      processing: false,
+      delay: 1000,
+      intervalId: null
     };
   },
 
-  takeSnapshot: function (e) {
+  handleSubmit: function (e) {
     e.preventDefault();
 
+    if (this.state.processing) {
+      this.stop();
+    } else {
+      this.start();
+    }
+  },
+
+  handleChangeDelay: function (e) {
+    this.setState({ delay: e.target.value });
+  },
+
+  start: function () {
+    intervalId = setInterval(
+      this.takeSnapshot,
+      this.state.delay
+    );
+
+    this.setState({
+      processing: true,
+      intervalId: intervalId
+    });
+  },
+
+  stop: function () {
+    clearInterval(this.state.intervalId);
+    this.setState({
+      processing: false,
+      intervalId: null
+    })
+  },
+
+  takeSnapshot: function () {
     Webcam.snap(function (value) {
       this.setState({
         value: value
@@ -54,16 +87,6 @@ var PhotoField = React.createClass({
       AppDispatcher.takeSnapshot(value);
     }.bind(this));
 
-  },
-
-  getLastSnapshot: function () {
-    var value = this.state.value;
-
-    if (value) {
-      return (
-        <img src={ value } style={{ width: '100%' }}/>
-      );
-    }
   },
 
   componentDidMount: function() {
@@ -85,21 +108,49 @@ var PhotoField = React.createClass({
           <div id="camera" style={ styles.camera } />
 
           <div style={ styles.camera_panel }>
-            <div style={ styles.controls }>
-              <a href="#" className="btn btn-primary width-100p" onClick={ this.takeSnapshot }>
-                Сделать фото
-              </a>
-            </div>
+            <form onSubmit={ this.handleSubmit }>
+              <div className="form-group">
+                <label 
+                  className="text-justify"
+                  style={ styles.label }>
+                  Делать снимки каждые:
+                </label>
 
-            <div style={ styles.snapshots }>
-              { this.getLastSnapshot() }
-            </div>
+                <input type="text"
+                  className="form-control"
+                  value={ this.state.delay }
+                  onChange={ this.handleChangeDelay }
+                />
+              </div>
+
+              { this.getSubmitHTML() }
+            </form>
           </div>
 
           <div className="clearfix" />
         </div>
       </div>
     );
+  },
+
+  getSubmitHTML: function () {
+    if (this.state.processing) {
+      return (
+        <input type="submit"
+          className="btn btn-danger"
+          style={ styles.submit }
+          value="Остановить"
+        />
+      );
+    } else {
+      return (
+        <input type="submit"
+          className="btn btn-success"
+          style={ styles.submit }
+          value="Начать"
+        />
+      );
+    }
   }
 });
 
